@@ -3,7 +3,7 @@ A user script to provide an overview to technical search on Google
 
 ## Brief intro:
 This is a user script to provide an **overview** to technical search on Google. You can also access to our web application for technology knowledge graph from the direct answer panel.
-It is written in Javascript and can run in Greasemonkey (Firefox) and Tampermonkey (Chrome). The overview graph is based on the structured knowledge mined from Stack Overflow. They can assist your technology search by providing an overview of technology landscape. 
+It is written in Javascript and can run in Tampermonkey (Chrome) and Greasemonkey (Firefox). The overview graph is based on the structured knowledge mined from Stack Overflow. They can assist your technology search by providing an overview of technology landscape. 
 
 ## Functions:
 * The script can detect technology terms (e.g., github, data visualization, machine learning) in your Google search. If the searched technology is in our structured knowledge base, the script renders a definition of the technology (extracted from Stack Overflow TagWiki) and the asking trend of this term, followed by a graph overview of the related technologies.
@@ -11,8 +11,9 @@ It is written in Javascript and can run in Greasemonkey (Firefox) and Tampermonk
 * You can right-click the node for brief definition or double-click for more details.
 
 ## Usage:
-* Install GreaseMonkey (Firefox) or TamperMonkey (Chrome) in your web browser.
-* Add a new script, copy & paste our code into GreaseMonky or TamperMonkey. (If using TamperMonkey, do remember remove the default comments. They are actually configuration settings that must be replaced by our script.)
+* Install TamperMonkey (Chrome) or GreaseMonkey (Firefox) in your web browser.
+* Add a new script, copy & paste our code into TamperMonkey or GreaseMonky. (If using TamperMonkey, do remember remove the default comments. They are actually configuration settings that must be replaced by our script. Please refer to the following figure.)
+![alt tag](https://raw.githubusercontent.com/tomhanlei/kg_plugin/master/download_instruct_2.png)
 * Search in Google (e.g., java, machine learning, unit testing, mocking), maybe there will be some suprise. Note that the current version support only search by one technology. Searching by multiple technology (e.g., php unit testing) is under development.
 
 ## Tips:
