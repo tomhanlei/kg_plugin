@@ -8,7 +8,7 @@
 // @require     http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js
 // @resource kg_css  https://graphofknowledge.appspot.com/dist/plugin.css
 // @include     https://www.google.com*
-// @version     4.0
+// @version     3.0
 // @grant    GM_addStyle
 // @grant    GM_getResourceText
 // ==/UserScript==
@@ -131,10 +131,9 @@ function tagTrend(data, width_raw, height_raw, top_margin, position){
 		  .attr("dy", "1em")
 		  .attr("transform", "rotate(-90)")
 		  .style("text-anchor", "middle")
-		  .style("font-size", "13px")
+		  .style("font-size", "11px")
 		  .text("question number /month");
 
-	//Add title in the graph
     var city = svg.selectAll(".city")
 		.data(cities)
 		.enter().append("g")
@@ -167,11 +166,22 @@ function gmMain () {
     console.log ('A "New" page has loaded.');           //for debugging
     // DO WHATEVER YOU WANT HERE.
 
+    var checkTopPanel = document.getElementById("topPanel") ;
     var checkRightColumn = document.getElementById("rightColumn");
+    //var checkGraph = document.getElementById("graph");
+    if (checkTopPanel != null) {    //delete the dom if exists
+        checkTopPanel.parentElement.removeChild(checkTopPanel);
+    }
     if (checkRightColumn != null) {    //delete the dom if exists
         checkRightColumn.parentElement.removeChild(checkRightColumn);
     }
 
+/*    // remove google advertisements
+    var ads = document.getElementById("tvcap");
+    if (ads != null) {    //delete the dom if exists
+        ads.parentElement.removeChild(ads);
+    }
+*/
     var input = document.getElementById("lst-ib").value.toLowerCase();                //Get the content in the search bar as the tag (lowercase and replace blank)
 
     // Insert Answering Box (right column) into the Google search page
@@ -180,15 +190,30 @@ function gmMain () {
 
     var baseHeight = 120 + $('#rhs').height();    //Align our answer box behind Google's direct answer or ads. Google's navigation bar height = 120
     var winWidth = window.innerWidth || document.body.clientWidth || document.documentElement.clientWidth;
-    if (winWidth < 1300) {
-        winWidth = 1300;
+    var rightColumnWidth = Math.max((winWidth / 2 + 50), 500);
+    var layoutTemplate = 0; // 0-large screen(1500px+); 1-medium screen(1000-1500px); 2-small screen(1000px-)
+    if (winWidth < 1500) {
+        if (winWidth > 1200){
+            layoutTemplate = 1;
+        } else {
+            layoutTemplate = 2;
+        }
     }
+
     var rightColumn = document.createElement("div");
     rightColumn.id = "rightColumn";
-    rightColumn.style = 'font-size:16px; position:absolute; top:'+ (baseHeight-10) +'px; left:'+ (winWidth/2) +'px; width: '+ (winWidth/2-30) +'px';
+    rightColumn.style = 'font-size:16px; position:absolute; top:'+ (baseHeight+10) +'px; left:'+ Math.max((winWidth/2-80), 700) +'px; width: '+ rightColumnWidth +'px';
     document.body.appendChild(rightColumn);
 
+    var topPanel = document.createElement("div");
+    topPanel.className = 'container img-rounded';
+    topPanel.id = 'topPanel';
+    // The following 2 lines could lead to some conflicts when re-submitting a search. Therefore, using substitute method at the end of the main function (i.e. gmMain())
+    var insertPoint = $('#topabar').get(0);       //var insertPoint = $('#extabar').get(0).firstChild;
+    insertPoint.parentElement.insertBefore(topPanel,insertPoint);
+
     // initial analysis of input
+    // algorithm
     var tomTask = 0;
     var tag, graphResult;
     var inputList = [];
@@ -303,7 +328,7 @@ function gmMain () {
 
                 if (wikiResult["items"] && wikiResult["items"].length != 0 && graphResult != "") { // the first term means xxx is not null, and both wiki data and graph data exists
                     // Insert tagWiki into right column
-                    str_HTML += '<div class="panel-heading"><div class="row"><div class="col-md-5">'+ tag +'</div><div class="col-md-1"> </div><div class="col-md-6">Asking trend in Stack Overflow</div></div></div><div style="font-size:0.875em;"><div class="row"><div class="col-md-5" id="wikiPanelL"><div class="panel-body">';
+                    str_HTML += '<div class="panel-heading"><div class="row"><div class="col-md-5">'+ tag +'</div><div class="col-md-7 text-right">Community interest in Stack Overflow</div></div></div><div style="font-size:0.875em;"><div class="row"><div class="col-md-7" id="wikiPanelL"><div class="panel-body">';
                     str_HTML += '<p>'+ wikiResult["items"][0]["excerpt"] +'</p>';
 
                     // Insert a link to knowledge graph website
@@ -317,7 +342,7 @@ function gmMain () {
                     str_HTML += '<span style="font-style:italic;font-size:0.875em;">Refer to <a href="'+ linkURL +'" target="_blank">'+ linkURL.substr(0,37) +' <span class="glyphicon glyphicon-option-horizontal"></span> <span class="glyphicon glyphicon-arrow-right"></span></a></span>';
                     //buttonPosition.onclick = redirectToUrl(tag.replace("#","+++"));
 
-                    str_HTML += '</div></div><div class="col-md-7" id="wikiPanelR"><svg id="trendGraph"></svg></div></div></div>'; // add trend graph panel<html>, only after rendering drawing function could be called
+                    str_HTML += '</div></div><div class="col-md-5" id="wikiPanelR"><svg id="trendGraph"></svg></div></div></div>'; // add trend graph panel<html>, only after rendering drawing function could be called
 
                     var wikiPanel = document.createElement("div");
                     wikiPanel.id = "wiki";
@@ -337,11 +362,11 @@ function gmMain () {
 
                     if (trendData['readyState'] == 4 && trendData['status'] == 200) {
                         if (trendData.responseJSON['tag_trend'].length > 0) { // returned value is not null
-                            var chartWidth = parseInt((winWidth/2-30) * (7/12) - 27);
-                            var chartHeight = parseInt((winWidth/2-30) * (7/12) * (5/11));
-                            var chartTopMargin = parseInt(document.getElementById('wikiPanelL').offsetHeight - document.getElementById('wikiPanelR').offsetHeight);
+                            var chartWidth = parseInt(rightColumnWidth * (5/12) - 27);
+                            var chartHeight = parseInt(rightColumnWidth * (5/12) * (5/11));
+                            var chartTopMargin = parseInt(document.getElementById('wikiPanelL').offsetHeight - chartHeight);
                             if (chartTopMargin > 0){
-                                chartTopMargin = parseInt((document.getElementById('wikiPanelL').offsetHeight - chartHeight) / 2);
+                                chartTopMargin = parseInt(chartTopMargin / 2) + 5;
                                 chartHeight += chartTopMargin;
                             }
                             else {
@@ -368,23 +393,68 @@ function gmMain () {
                 console.log(relatedLib); // for debug purpose
                 if (relatedLib['readyState'] == 4 && relatedLib['status'] == 200) {
                     if (relatedLib.responseJSON['lib_list'].length > 0) { // returned value is not null
-                        var kgWidth = parseInt((winWidth/2-30) * (7/12) - 20);
-                        var kgHeight = parseInt((winWidth/2-30) * (7/12) - 20);
-                        var numForDisplay = parseInt((kgHeight - 90) / 35); // used to measure related-lib/concepts panel (341px display 7; 381px--8; 413--9; 522--12)
-
                         // (A)
                         str_HTML = '';
-                        str_HTML += '<div class="panel-heading"><div class="row"><div class="col-md-5">Related';
-                        if (relatedLib.responseJSON['lib_list'].length >= numForDisplay || relatedLib.responseJSON['language_list'].length >= numForDisplay || relatedLib.responseJSON['concept_list'].length >= numForDisplay){
-                            str_HTML += '<button id="hideRightBtn" type="button" class="btn btn-xs pull-right" style="background-color:#AABBCC; color:white;">show more <span class="glyphicon glyphicon-chevron-down"></span></button>';
+                        switch(layoutTemplate){ // different template according to screen size
+                            case 1:
+                                var kgWidth = parseInt(rightColumnWidth * (9/12) - 19);
+                                var kgHeight = parseInt(rightColumnWidth * (9/12) - 19);
+                                var numForDisplay = parseInt((kgHeight - 90) / 35); // used to measure related-lib/concepts panel (341px display 7 items; 381px--8; 413--9; 522--12)
+                                var labelWidth = 12; // used to set width(col-12 or 10) of each term in lib/lang/concept, as well as to set the number of characters in each label (y=96-7x, for col-10 display 26 letters)
+
+                                str_HTML += '<div class="panel-heading"><div class="row"><div class="col-md-3">Related';
+                                if (relatedLib.responseJSON['lib_list'].length >= numForDisplay || relatedLib.responseJSON['language_list'].length >= numForDisplay || relatedLib.responseJSON['concept_list'].length >= numForDisplay){
+                                    str_HTML += '<button id="hideRightBtn" type="button" class="btn btn-xs pull-right" style="background-color:#AABBCC; color:white;">show more <span class="glyphicon glyphicon-chevron-down"></span></button>';
+                                }
+                                str_HTML += '</div><div class="col-md-1"> </div><div class="col-md-8">Knowledge Graph</div></div></div>';
+                                str_HTML += '<div class="row"><div class="col-md-3" id="kgGraphPanelL">';
+                                str_HTML += '<ul class="nav nav-tabs"><li class="active"><a data-toggle="tab" href="#kgTab1" style="padding:3px 8px 3px 8px;font-size:0.875em;font-style:italic;"><abbr title="Library">Lib</abbr></a></li><li><a data-toggle="tab" href="#kgTab2" style="padding:3px 8px 3px 8px;font-size:0.875em;font-style:italic;"><abbr title="Language">Lan</abbr></a></li><li><a data-toggle="tab" href="#kgTab3" style="padding:3px 8px 3px 8px;font-size:0.875em;font-style:italic;"><abbr title="Concept">Con</abbr></a></li></ul><div class="tab-content" style="padding-top:10px;">';
+                                str_HTML += '<div id="kgTab1" class="tab-pane fade in active"></div>';
+                                str_HTML += '<div id="kgTab2" class="tab-pane fade"></div>';
+                                str_HTML += '<div id="kgTab3" class="tab-pane fade"></div>';
+                                str_HTML += '</div></div><div class="col-md-9" id="kgGraphPanelR"><div style="padding:6px 0 0 6px;"><svg id="kgGraph"></svg></div></div></div>';
+
+                                break;
+                            case 2:
+                                var kgWidth = rightColumnWidth - 12;
+                                var kgHeight = rightColumnWidth - 12;
+                                var numForDisplay = 6;
+                                var labelWidth = 10; // used to set width(col-12 or 10) of each term in lib/lang/concept, as well as to set the number of characters in each label (y=96-7x, for col-10 display 26 letters)
+
+                                str_HTML += '<div class="panel-heading">Related';
+                                if (relatedLib.responseJSON['lib_list'].length >= numForDisplay || relatedLib.responseJSON['language_list'].length >= numForDisplay || relatedLib.responseJSON['concept_list'].length >= numForDisplay){
+                                    str_HTML += '<button id="hideRightBtn" type="button" class="btn btn-xs pull-right" style="background-color:#AABBCC; color:white;">show more <span class="glyphicon glyphicon-chevron-down"></span></button>';
+                                }
+                                str_HTML += '</div>';
+                                str_HTML += '<div class="row"><div class="col-md-12" id="kgGraphPanelL">';
+                                str_HTML += '<ul class="nav nav-tabs"><li class="active"><a data-toggle="tab" href="#kgTab1" style="line-height:8px;font-size:0.875em;font-style:italic;">Library</a></li><li><a data-toggle="tab" href="#kgTab2" style="line-height:8px;font-size:0.875em;font-style:italic;">Language</a></li><li><a data-toggle="tab" href="#kgTab3" style="line-height:8px;font-size:0.875em;font-style:italic;">Concept</a></li></ul>';
+                                str_HTML += '<div class="tab-content" style="padding-top:10px;">';
+                                str_HTML += '<div id="kgTab1" class="tab-pane fade in active"></div><div id="kgTab2" class="tab-pane fade"></div><div id="kgTab3" class="tab-pane fade"></div>';
+                                str_HTML += '</div></div></div>';
+
+                                str_HTML += '<div class="panel-heading">Knowledge Graph</div>';
+                                str_HTML += '<div class="row"><div class="col-md-12" id="kgGraphPanelR"><div style="padding:6px 7px 0 5px;"><svg id="kgGraph"></svg></div></div></div>';
+
+                                break;
+                            default: // case 0 (large screen, 1500px+)
+                                var kgWidth = parseInt(rightColumnWidth * (7/12) - 19);
+                                var kgHeight = parseInt(rightColumnWidth * (7/12) - 19);
+                                var numForDisplay = parseInt((kgHeight - 90) / 35); // used to measure related-lib/concepts panel (341px display 7 items; 381px--8; 413--9; 522--12)
+                                var labelWidth = 10; // used to set width(col-12 or 10) of each term in lib/lang/concept, as well as to set the number of characters in each label (y=96-7x, for col-10 display 26 letters)
+
+                                str_HTML += '<div class="panel-heading"><div class="row"><div class="col-md-5">Related';
+                                if (relatedLib.responseJSON['lib_list'].length >= numForDisplay || relatedLib.responseJSON['language_list'].length >= numForDisplay || relatedLib.responseJSON['concept_list'].length >= numForDisplay){
+                                    str_HTML += '<button id="hideRightBtn" type="button" class="btn btn-xs pull-right" style="background-color:#AABBCC; color:white;">show more <span class="glyphicon glyphicon-chevron-down"></span></button>';
+                                }
+                                str_HTML += '</div><div class="col-md-1"> </div><div class="col-md-6">Knowledge Graph</div></div></div>';
+                                str_HTML += '<div class="row"><div class="col-md-5" id="kgGraphPanelL">';
+                                str_HTML += '<ul class="nav nav-tabs"><li class="active"><a data-toggle="tab" href="#kgTab1" style="line-height:8px;font-size:0.875em;font-style:italic;">Library</a></li><li><a data-toggle="tab" href="#kgTab2" style="line-height:8px;font-size:0.875em;font-style:italic;">Language</a></li><li><a data-toggle="tab" href="#kgTab3" style="line-height:8px;font-size:0.875em;font-style:italic;">Concept</a></li></ul><div class="tab-content" style="padding-top:10px;">';
+                                str_HTML += '<div id="kgTab1" class="tab-pane fade in active"></div>';
+                                str_HTML += '<div id="kgTab2" class="tab-pane fade"></div>';
+                                str_HTML += '<div id="kgTab3" class="tab-pane fade"></div>';
+                                str_HTML += '</div></div><div class="col-md-7" id="kgGraphPanelR"><div style="padding-top:6px;"><svg id="kgGraph"></svg></div></div></div>';
                         }
-                        str_HTML += '</div><div class="col-md-1"> </div><div class="col-md-6">Knowledge Graph</div></div></div>';
-                        str_HTML += '<div class="row"><div class="col-md-5" id="kgGraphPanelL">';
-                        str_HTML += '<ul class="nav nav-tabs"><li class="active"><a data-toggle="tab" href="#kgTab1" style="line-height:8px;font-size:0.75em;">Libraries</a></li><li><a data-toggle="tab" href="#kgTab2" style="line-height:8px;font-size:0.75em;">Languages</a></li><li><a data-toggle="tab" href="#kgTab3" style="line-height:8px;font-size:0.75em;">Concepts</a></li></ul><div class="tab-content">';
-                        str_HTML += '<div id="kgTab1" class="tab-pane fade in active"></div>';
-                        str_HTML += '<div id="kgTab2" class="tab-pane fade"><p>tom2</p></div>';
-                        str_HTML += '<div id="kgTab3" class="tab-pane fade"><p>snoopy 3</p></div>';
-                        str_HTML += '</div></div><div class="col-md-7" id="kgGraphPanelR"><svg id="kgGraph"></svg></div></div>';
+
                         var kgPanel = document.createElement('div');
                         kgPanel.id = "kgPanel";
                         kgPanel.className = "panel panel-info";
@@ -396,7 +466,7 @@ function gmMain () {
                             var edgeDistance = 80*graphContent["links"].length/graphContent["nodes"].length;      //the edge distance depends on the ratio of edge and node number
 
                             var scaleAdj = kgWidth / 500; // default width of the chart is 500px (500px width is the best fit)
-                            var scaleAdj = parseInt(Math.sqrt(scaleAdj*scaleAdj) * 10) / 10; // square scale or linear scale
+                            var scaleAdj = parseInt(Math.sqrt(scaleAdj*scaleAdj) * 100) / 100; // square scale or linear scale
                             var kgTopMargin = parseInt(document.getElementById('kgGraphPanelL').offsetHeight - document.getElementById('kgGraphPanelR').offsetHeight);
                             if (kgTopMargin > 0){
                                 kgTopMargin = parseInt((document.getElementById('wikiPanelL').offsetHeight - kgHeight) / 2);
@@ -405,8 +475,8 @@ function gmMain () {
                             else {
                                 kgTopMargin = 0;
                             }
-                            document.getElementById('kgGraph').style.height = kgHeight + 'px';
-                            document.getElementById('kgGraph').style.width = kgWidth + 'px';
+                            document.getElementById('kgGraph').style.height = (kgHeight) + 'px';
+                            document.getElementById('kgGraph').style.width = (kgWidth) + 'px';
 
                             knowledgeGraph(graphContent, kgWidth, kgHeight, 0, edgeDistance, "#kgGraph", scaleAdj);
                         } // if (knowledge graph data exists)
@@ -416,39 +486,45 @@ function gmMain () {
                             str_HTML = '';
                             for (var i=0; i<relatedLib.responseJSON['lib_list'].length; i++) {
                                 if (i >= numForDisplay) {
-                                    str_HTML += '<div id="lib_right_div'+i+'" style="display:none"><abbr title="'+ relatedLib.responseJSON['lib_list'][i][0] +'"><pre style="padding:3px 10px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['lib_list'][i][0] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['lib_list'][i][0].substr(0,20) +'</a></pre></abbr></div>';
+                                    str_HTML += '<div id="lib_right_div'+i+'" style="display:none" class="col-md-'+labelWidth+'"><abbr title="'+ relatedLib.responseJSON['lib_list'][i][0] +'"><pre style="padding:3px 0px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['lib_list'][i][0] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['lib_list'][i][0].substr(0,(96-7*labelWidth)) +'</a></pre></abbr></div>';
                                 } else {
-                                    str_HTML += '<abbr title="'+ relatedLib.responseJSON['lib_list'][i][0] +'"><pre style="padding:3px 10px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['lib_list'][i][0] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['lib_list'][i][0].substr(0,20) +'</a></pre></abbr>';
+                                    str_HTML += '<div id="lib_right_div'+i+'" class="col-md-'+labelWidth+'"><abbr title="'+ relatedLib.responseJSON['lib_list'][i][0] +'"><pre style="padding:3px 0px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['lib_list'][i][0] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['lib_list'][i][0].substr(0,(96-7*labelWidth)) +'</a></pre></abbr></div>';
                                 }
                             }
                             document.getElementById('kgTab1').innerHTML = str_HTML;
                         }
-
                         // (C-B2)
                         if (showLanguage){
                             str_HTML = '';
                             for (var i=0; i<relatedLib.responseJSON['language_list'].length; i++) {
                                 if (i >= numForDisplay) {
-                                    str_HTML += '<div id="lang_right_div'+i+'" style="display:none"><abbr title="'+ relatedLib.responseJSON['language_list'][i] +'"><pre style="padding:3px 10px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['language_list'][i] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['language_list'][i].substr(0,20) +'</a></pre></abbr></div>';
+                                    str_HTML += '<div id="lang_right_div'+i+'" style="display:none" class="col-md-'+labelWidth+'"><abbr title="'+ relatedLib.responseJSON['language_list'][i] +'"><pre style="padding:3px 0px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['language_list'][i] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['language_list'][i].substr(0,(96-7*labelWidth)) +'</a></pre></abbr></div>';
                                 } else {
-                                    str_HTML += '<abbr title="'+ relatedLib.responseJSON['language_list'][i] +'"><pre style="padding:3px 10px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['language_list'][i] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['language_list'][i].substr(0,20) +'</a></pre></abbr>';
+                                    str_HTML += '<div id="lang_right_div'+i+'" class="col-md-'+labelWidth+'"><abbr title="'+ relatedLib.responseJSON['language_list'][i] +'"><pre style="padding:3px 0px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['language_list'][i] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['language_list'][i].substr(0,(96-7*labelWidth)) +'</a></pre></abbr></div>';
                                 }
                             }
+                            //if (relatedLib.responseJSON['language_list'].length >= numForDisplay){
+                            //    str_HTML += '<button id="hideRightBtn" type="button" class="btn btn-xs" style="background-color:#AABBCC; color:white">show more <span class="glyphicon glyphicon-chevron-down"></span></button>';
+                            //}
                             document.getElementById('kgTab2').innerHTML = str_HTML;
                         }
-
                         // (C-C2)
                         if (showConcept){
                             str_HTML = '';
                             for (var i=0; i<relatedLib.responseJSON['concept_list'].length; i++) {
                                 if (i >= numForDisplay) {
-                                    str_HTML += '<div id="con_right_div'+i+'" style="display:none"><abbr title="'+ relatedLib.responseJSON['concept_list'][i] +'"><pre style="padding:3px 10px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['concept_list'][i] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['concept_list'][i].substr(0,20) +'</a></pre></abbr></div>';
+                                    str_HTML += '<div id="con_right_div'+i+'" style="display:none" class="col-md-'+labelWidth+'"><abbr title="'+ relatedLib.responseJSON['concept_list'][i] +'"><pre style="padding:3px 0px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['concept_list'][i] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['concept_list'][i].substr(0,(96-7*labelWidth)) +'</a></pre></abbr></div>';
                                 } else {
-                                    str_HTML += '<abbr title="'+ relatedLib.responseJSON['concept_list'][i] +'"><pre style="padding:3px 10px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['concept_list'][i] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['concept_list'][i].substr(0,20) +'</a></pre></abbr>';
+                                    str_HTML += '<div id="con_right_div'+i+'" class="col-md-'+labelWidth+'"><abbr title="'+ relatedLib.responseJSON['concept_list'][i] +'"><pre style="padding:3px 0px 3px 10px;"><a href="http://stackoverflow.com/tags/'+ relatedLib.responseJSON['concept_list'][i] +'/info" target="_blank" class="btn btn-link" style="padding:0;">'+ relatedLib.responseJSON['concept_list'][i].substr(0,(96-7*labelWidth)) +'</a></pre></abbr></div>';
                                 }
                             }
+                            //if (relatedLib.responseJSON['concept_list'].length >= numForDisplay){
+                            //    str_HTML += '<button id="hideRightBtn" type="button" class="btn btn-xs" style="background-color:#AABBCC; color:white">show more <span class="glyphicon glyphicon-chevron-down"></span></button>';
+                            //}
                             document.getElementById('kgTab3').innerHTML = str_HTML;
                         }
+
+                        rightColumn.style.top = (parseInt(rightColumn.style.top) + topPanel.offsetHeight - 10) + 'px';
                         $('#hideRightBtn').get(0).onclick = function(){
                             if (this.innerHTML.substr(0,1) == 'h'){
                                 for (i=numForDisplay; i<relatedLib.responseJSON['lib_list'].length; i++){
@@ -479,7 +555,6 @@ function gmMain () {
                 } // if (tag returned correctly, i.e. not null)
         } // switch
     } // for
-
 } // function gmMain
 
 
@@ -495,28 +570,30 @@ var margin = {
  width = width_raw - margin.left - margin.right,
  height = height_raw - margin.top - margin.bottom;
 
-var border=0;
-var bordercolor='gray';
+var border = 1;
+var bordercolor = 'gray';
 
 var color = d3.scale.category20();
 
 var svg = d3.select(position).append("svg")
-	.attr("border", border)
+//    .attr("width", width + margin.left + margin.right)
+//    .attr("height", height + margin.top + margin.bottom)
+    .attr("border", border)
     .attr("id", "kgInside")
 	;
 
 //add border to the svg
 var borderPath = svg.append("rect")
        			.attr("x", margin.left)
-       			.attr("y", 0)
+       			.attr("y", margin.top)
        			.attr("height", height)
        			.attr("width", width)
        			.style("stroke", bordercolor)
        			.style("fill", "none")
-       			.style("stroke-width", border);
+                .style("stroke-width", border);
 
     var force = d3.layout.force()
-    .gravity(Math.max(Math.min((0.1 - 0.06 / 1.2 * scaleAdjust), 0.07), 0.03)) // (larger scale --> wider/smaller number) 100%-->0.05; 140%-->0.03; 60%-->0.07 (0.03<= x <=0.07)
+    .gravity(Math.max(Math.min((0.1 - 0.06 / 1.2 * scaleAdjust), 0.07), 0.02)) // (larger scale --> wider/smaller number) 100%-->0.05; 160%-->0.02; 60%-->0.07 (0.03<= x <=0.07)
     .charge(-130)
 	  .linkDistance(distance)
     .size([width, height]);
@@ -562,8 +639,8 @@ var json = featureContent;
 	  ;
 
     node.append("circle")
-    //.attr("r", function(d) { return parseInt(d.degree * scaleAdjust);})
-      .attr("r", function(d) { return parseInt(d.degree);})
+      .attr("r", function(d) { return parseInt(d.degree * Math.max(1, scaleAdjust));}) //if zoomed-in, the circle should look larger
+    //.attr("r", function(d) { return parseInt(d.degree);})
       .style("fill", function (d) {return color(d.group);});
 
   node.append("text")
@@ -579,9 +656,9 @@ var json = featureContent;
 	var radius = 10;
 	//node.attr("cx", function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
     //   .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(height - radius, d.y)); });
-    if (scaleAdjust>1){
-        scaleAdjust = 1; // no need to increase the edge length (even if it is zoomed-in), but it should decrease the edge length if it is zoomed-out
-    }
+
+    scaleAdjust = Math.min(1, scaleAdjust); // no need to increase the edge length (even if it is zoomed-in), but it should decrease the edge length if it is zoomed-out
+
     node.attr("transform", function(d) { return "translate(" + (Math.max(radius, Math.min(width - radius, d.x)) * scaleAdjust) + "," + (Math.max(radius, Math.min(height - radius, d.y)) * scaleAdjust) + ")"; });
 
 	link.attr("x1", function(d) { return (d.source.x * scaleAdjust); })
