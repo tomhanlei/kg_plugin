@@ -11,10 +11,11 @@ It is written in Javascript and can run in Tampermonkey (Chrome) and Greasemonke
 * You can right-click the node for brief definition or double-click for more details.
 
 ## Usage:
-* Install TamperMonkey (Chrome) or GreaseMonkey (Firefox) in your web browser.
-* Add a new script, copy & paste our code into TamperMonkey or GreaseMonky. (If using TamperMonkey, do remember remove the default comments. They are actually configuration settings that must be replaced by our script. Please refer to the following figure.)
+1. Install TamperMonkey (Chrome) or GreaseMonkey (Firefox) in your web browser.
+2. Add a new script, copy & paste our code into TamperMonkey or GreaseMonky. (If using TamperMonkey, do remember remove the default comments. They are actually configuration settings that must be replaced by our script. Please refer to the following figure.)
 ![alt tag](https://raw.githubusercontent.com/tomhanlei/kg_plugin/master/download_instruct_2.png)
-* Search in Google (e.g., java, machine learning, unit testing, mocking), maybe there will be some suprise. Note that the current version support only search by one technology. Searching by multiple technology (e.g., php unit testing) is under development.
+3. Search in Google (e.g., java, machine learning, unit testing, mocking), maybe there will be some surprise. Below is the actual user interface, technology overview displaying to the right of Google page. Please note that the current version support only search by one technology. Searching by multiple technology (e.g., php unit testing) is under development.
+![alt tag](https://github.com/tomhanlei/kg_plugin/blob/master/demo1.png)
 
 ## Tips:
 * __If you are using this tool for the first time, kindly visit *https://128.199.241.136:9001/kgExtensionRedirect/* before you start, and proceed to the website by ignoring the insecure warning and trust it in advance__.
@@ -22,6 +23,6 @@ It is written in Javascript and can run in Tampermonkey (Chrome) and Greasemonke
 * If the answer box does not appear after you search for something, please kindly click on the address bar of the browser, and then just press ENTER key on the keyborad. And then it should work correctly.
 
 ## Contact:
-If you have any problem, do not hesitate to contact me at chen0966|e.ntu.edu.sg. (change "|" to "@").
+If you have any problem, please do not hesitate to contact chen0966|e.ntu.edu.sg. (change "|" to "@").
 
 Thanks and enjoy the journey.
