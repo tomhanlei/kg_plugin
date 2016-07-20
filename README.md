@@ -23,6 +23,6 @@ It is written in Javascript and can run in Tampermonkey (Chrome) and Greasemonke
 * If the answer box does not appear after you search for something, please kindly click on the address bar of the browser, and then just press ENTER key on the keyborad. And then it should work correctly.
 
 ## Contact:
-If you have any problem, please do not hesitate to contact chen0966|e.ntu.edu.sg. (change "|" to "@").
+If you have any problem or suggestion, please do not hesitate to contact chen0966|e.ntu.edu.sg *or* tomhanlei|ntu.edu.sg. (change "|" to "@").
 
 Thanks and enjoy the journey.
